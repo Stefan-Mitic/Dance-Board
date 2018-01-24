@@ -1,6 +1,11 @@
 import java.io.*;
 import java.util.Scanner;
+
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 import javax.swing.JOptionPane;
+
 // import sun.audio.AudioPlayer;
 // import sun.audio.AudioStream;
 
@@ -12,8 +17,7 @@ import javax.swing.JOptionPane;
  */
 
 public class BoardTester {
-	static int y = 0, x, timeCount = 0, randomKey = 5, counter = -1,
-			counter2 = 0, points = 0, place = 0;
+	static int y = 0, x, timeCount = 0, randomKey = 5, counter = -1, counter2 = 0, points = 0, place = 0;
 	static Board b;
 	static int[][] grid;
 	static int spawn;
@@ -21,8 +25,10 @@ public class BoardTester {
 	static int gO = 0;
 	static int highScore[] = new int[5];
 	static String names[] = new String[5];
-	//static AudioStream as;
-	static InputStream in;
+	// static AudioStream as;
+	static File soundFile;
+	static AudioInputStream in;
+	static Clip clip;
 	static String song;
 	static boolean firstTime = true, songPicked = false;
 
@@ -31,9 +37,8 @@ public class BoardTester {
 	 */
 	public static void startMenu() {
 		Object[] options = { "Start", "Instructions", "Leaderboard" };
-		int action = JOptionPane.showOptionDialog(null, "", "Menu",
-				JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null,
-				options, options[0]);
+		int action = JOptionPane.showOptionDialog(null, "", "Menu", JOptionPane.DEFAULT_OPTION,
+				JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
 		switch (action) {
 		case 0:
 			songsOption();
@@ -55,8 +60,7 @@ public class BoardTester {
 	 */
 	public static void songsOption() {
 		Object[] options = { "Global Deejays", "Give It Up Now", "Flower Dance" };
-		int action = JOptionPane.showOptionDialog(null, "Choose a song:",
-				"Song Menu", JOptionPane.DEFAULT_OPTION,
+		int action = JOptionPane.showOptionDialog(null, "Choose a song:", "Song Menu", JOptionPane.DEFAULT_OPTION,
 				JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
 		switch (action) {
 		case 0:
@@ -75,7 +79,8 @@ public class BoardTester {
 			startMenu();
 		}
 
-		//AudioPlayer.player.stop(as);
+		clip.stop();
+		// AudioPlayer.player.stop(as);
 		songPicked = false;
 
 		if (firstTime) {
@@ -92,26 +97,23 @@ public class BoardTester {
 	 */
 	public static void instructions() {
 
-		JOptionPane
-				.showConfirmDialog(
-						null,
-						"Controls: A S D F \nIn this game you must tap the peg at the right time to get a point. "
-								+ "\nTo tap the peg you must tap the corresponding key. "
-								+ "\nThe pegs move across from left to right and each row has a certain key assigned to it.",
-						"Instructions", JOptionPane.CLOSED_OPTION);
+		JOptionPane.showConfirmDialog(null,
+				"Controls: A S D F \nIn this game you must tap the peg at the right time to get a point. "
+						+ "\nTo tap the peg you must tap the corresponding key. "
+						+ "\nThe pegs move across from left to right and each row has a certain key assigned to it.",
+				"Instructions", JOptionPane.CLOSED_OPTION);
 		startMenu();
 
 	}
-	
+
 	/**
 	 * A method that creates a JOptionPane with the top five scores in the game
 	 */
 	public static void leaderBoard() {
-		JOptionPane.showConfirmDialog(null, names[0] + " " + highScore[0]
-				+ "\n" + names[1] + " " + highScore[1] + "\n" + names[2]
-				+ " " + highScore[2] + "\n" + names[3] + " " + highScore[3]
-				+ "\n" + names[4] + " " + highScore[4], "Leaderboard",
-				JOptionPane.CLOSED_OPTION);
+		JOptionPane.showConfirmDialog(null,
+				names[0] + " " + highScore[0] + "\n" + names[1] + " " + highScore[1] + "\n" + names[2] + " "
+						+ highScore[2] + "\n" + names[3] + " " + highScore[3] + "\n" + names[4] + " " + highScore[4],
+				"Leaderboard", JOptionPane.CLOSED_OPTION);
 
 		startMenu();
 	}
@@ -123,15 +125,23 @@ public class BoardTester {
 		File file = new File("score");
 		Scanner fileIn = null;
 		PrintWriter output = null;
-		//AudioPlayer.player.stop(as);
+		clip.stop();
+		// AudioPlayer.player.stop(as);
 
 		try {
-			in = new FileInputStream("gameover.wav");
-			//as = new AudioStream(in);
+			soundFile = new File("gameover.wav");
+			in = AudioSystem.getAudioInputStream(soundFile);
+			clip = AudioSystem.getClip();
+			clip.open(in);
+			clip.start();
+			clip.loop(Clip.LOOP_CONTINUOUSLY);
+			// in = new FileInputStream("gameover.wav");
+			// as = new AudioStream(in);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		//AudioPlayer.player.start(as);
+
+		// AudioPlayer.player.start(as);
 
 		try {
 			fileIn = new Scanner(new FileReader("score"));
@@ -143,8 +153,7 @@ public class BoardTester {
 			names[counter] = fileIn.next();
 			highScore[counter] = fileIn.nextInt();
 		}
-		String name = JOptionPane.showInputDialog(null, "Enter Name:",
-				"Game Over", JOptionPane.OK_CANCEL_OPTION);
+		String name = JOptionPane.showInputDialog(null, "Enter Name:", "Game Over", JOptionPane.OK_CANCEL_OPTION);
 
 		if (name != null && name.length() > 0) {
 			try {
@@ -154,24 +163,23 @@ public class BoardTester {
 				System.exit(1);
 			}
 
-				for (int counter = 0, next = 0; next != 1; counter++) {
-					if (points >= highScore[counter]) {
-						place = counter;
-						for (int counter1 = 4; counter1 > place; counter1--) {
-							highScore[counter1] = highScore[counter1 - 1];
-						}
-						for (int counter1 = 4; counter1 > place; counter1--) {
-							names[counter1] = names[counter1 - 1];
-						}
-						highScore[counter] = points;
-						names[counter] = name;
-						next = 1;
+			for (int counter = 0, next = 0; next != 1; counter++) {
+				if (points >= highScore[counter]) {
+					place = counter;
+					for (int counter1 = 4; counter1 > place; counter1--) {
+						highScore[counter1] = highScore[counter1 - 1];
 					}
+					for (int counter1 = 4; counter1 > place; counter1--) {
+						names[counter1] = names[counter1 - 1];
+					}
+					highScore[counter] = points;
+					names[counter] = name;
+					next = 1;
 				}
+			}
 
 			for (int counter = 0; counter < 5; counter++) {
-				output.format("%10s %9s", names[counter], highScore[counter]
-						+ "\n");
+				output.format("%10s %9s", names[counter], highScore[counter] + "\n");
 			}
 
 			output.close();
@@ -184,22 +192,27 @@ public class BoardTester {
 	}
 
 	/**
-	 * A method that creates a JOptionPane with a game over option to quit or go
-	 * to the start menu
+	 * A method that creates a JOptionPane with a game over option to quit or go to
+	 * the start menu
 	 * 
 	 * @param messageBox
 	 */
 	public static void gameOverBox(String messageBox) {
-		int box = JOptionPane.showConfirmDialog(null, messageBox, "Game Over",
-				JOptionPane.YES_NO_OPTION);
+		int box = JOptionPane.showConfirmDialog(null, messageBox, "Game Over", JOptionPane.YES_NO_OPTION);
 		if (box == JOptionPane.YES_OPTION) {
 			try {
-				in = new FileInputStream("Start Song.wav");
-				//as = new AudioStream(in);
+				soundFile = new File("Start Song.wav");
+				in = AudioSystem.getAudioInputStream(soundFile);
+				clip = AudioSystem.getClip();
+				clip.open(in);
+				clip.start();
+				clip.loop(Clip.LOOP_CONTINUOUSLY);
+				// in = new FileInputStream("Start Song.wav");
+				// as = new AudioStream(in);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			//AudioPlayer.player.start(as);
+			// AudioPlayer.player.start(as);
 			startMenu();
 			gO = 1;
 		} else {
@@ -248,12 +261,18 @@ public class BoardTester {
 	 */
 	public static void main(String[] args) {
 		try {
-			in = new FileInputStream("Start Song.wav");
-			//as = new AudioStream(in);
+			soundFile = new File("Start Song.wav");
+			in = AudioSystem.getAudioInputStream(soundFile);
+			clip = AudioSystem.getClip();
+			clip.open(in);
+			clip.start();
+			clip.loop(Clip.LOOP_CONTINUOUSLY);
+			// in = new FileInputStream("Start Song.wav");
+			// as = new AudioStream(in);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		//AudioPlayer.player.start(as);
+		// AudioPlayer.player.start(as);
 		startMenu();
 	}
 
@@ -264,13 +283,19 @@ public class BoardTester {
 		firstTime = false;
 		do {
 			try {
-				in = new FileInputStream(song);
-				//as = new AudioStream(in);
+				soundFile = new File(song);
+				in = AudioSystem.getAudioInputStream(soundFile);
+				clip = AudioSystem.getClip();
+				clip.open(in);
+				clip.start();
+				clip.loop(Clip.LOOP_CONTINUOUSLY);
+				// in = new FileInputStream(song);
+				// as = new AudioStream(in);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 
-			//AudioPlayer.player.start(as);
+			// AudioPlayer.player.start(as);
 
 			for (int i = 0; i < 4; i++) {
 				for (int j = 0; j < 10; j++) {
